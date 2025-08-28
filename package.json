@@ -1,0 +1,43 @@
+{
+  "name": "student-grievance-system",
+  "version": "1.0.0",
+  "description": "A blockchain-based student grievance system with AI-powered duplicate detection",
+  "main": "backend/server.js",
+  "scripts": {
+    "dev": "node scripts/dev-manager.js",
+    "dev:auto": "node scripts/dev-manager.js",
+    "dev:manual": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd backend && npm run dev",
+    "client": "cd frontend && npm start",
+    "dev:frontend": "cd frontend && npm start",
+    "dev:backend": "cd backend && npm run dev",
+    "blockchain": "cd blockchain && ganache-cli",
+    "compile": "cd blockchain && truffle compile",
+    "migrate": "cd blockchain && truffle migrate",
+    "test": "cd blockchain && truffle test",
+    "install-all": "npm install && cd frontend && npm install && cd ../backend && npm install && cd ../blockchain && npm install"
+  },
+  "keywords": [
+    "blockchain",
+    "grievance",
+    "student",
+    "ethereum",
+    "react",
+    "nodejs"
+  ],
+  "author": "Student Developer",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
+    "concurrently": "^8.2.2",
+    "hardhat": "^2.26.1"
+  },
+  "dependencies": {
+    "cross-env": "^7.0.3",
+    "ethers": "^6.15.0",
+    "ganache-cli": "^6.12.2",
+    "ipfs-http-client": "^60.0.1",
+    "wait-on": "^7.2.0",
+    "ws": "^8.14.2"
+  }
+}

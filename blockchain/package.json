@@ -1,0 +1,27 @@
+{
+  "name": "grievance-blockchain",
+  "version": "1.0.0",
+  "description": "Blockchain smart contracts for Student Grievance System",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "truffle test",
+    "compile": "truffle compile",
+    "migrate": "truffle migrate",
+    "ganache": "ganache-cli -p 7545 -h 0.0.0.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.9.3",
+    "web3": "^4.1.1"
+  },
+  "devDependencies": {
+    "@truffle/hdwallet-provider": "^2.1.15",
+    "truffle": "^5.11.5",
+    "ganache-cli": "^6.12.2"
+  },
+  "keywords": ["truffle", "ethereum", "blockchain", "smart-contracts"],
+  "author": "Student Developer",
+  "license": "MIT"
+}
