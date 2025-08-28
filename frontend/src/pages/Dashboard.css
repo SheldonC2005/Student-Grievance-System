@@ -1,0 +1,149 @@
+/* Dashboard Enhancements */
+.hero-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 15px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2"/><circle cx="30" cy="30" r="20" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/><circle cx="70" cy="70" r="15" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></svg>') no-repeat center;
+  background-size: 200px 200px;
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.stats-card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+}
+
+.stats-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.action-card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.action-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.btn-gradient-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn-gradient-primary:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  color: white;
+}
+
+.status-badge {
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+/* Enhanced navbar styling */
+.navbar-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.navbar-gradient .navbar-brand,
+.navbar-gradient .nav-link {
+  color: white !important;
+  font-weight: 500;
+}
+
+.navbar-gradient .nav-link:hover {
+  color: rgba(255,255,255,0.8) !important;
+  background-color: rgba(255,255,255,0.1);
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.navbar-gradient .nav-link.active {
+  background-color: rgba(255,255,255,0.2);
+  border-radius: 6px;
+  color: white !important;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+  .hero-section {
+    margin-bottom: 2rem;
+  }
+  
+  .stats-card,
+  .action-card {
+    margin-bottom: 1rem;
+  }
+  
+  .display-4 {
+    font-size: 2rem;
+  }
+}
+
+/* Blockchain status enhancements */
+.blockchain-status {
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(145deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.blockchain-status .alert {
+  border: none;
+  border-radius: 10px;
+  margin-bottom: 0;
+}
+
+/* Category breakdown styling */
+.category-card {
+  background: white;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+.category-item {
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.category-item:last-child {
+  border-bottom: none;
+}
+
+.category-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 15px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}

@@ -510,4 +510,74 @@ router.post('/analyze-sentiment', [
   }
 });
 
+// Get complaint statistics for dashboard
+router.get('/stats/overview', async (req, res) => {
+  try {
+    console.log('📊 Fetching complaint statistics...');
+    
+    // Get total complaints count
+    const totalResult = await query('SELECT COUNT(*) as total FROM complaints');
+    const totalComplaints = totalResult[0]?.total || 0;
+    
+    // Get complaints by status
+    const statusResult = await query(`
+      SELECT 
+        status,
+        COUNT(*) as count 
+      FROM complaints 
+      GROUP BY status
+    `);
+    
+    // Initialize status counts
+    let pendingComplaints = 0;
+    let resolvedComplaints = 0;
+    let inProgressComplaints = 0;
+    
+    // Parse status results
+    statusResult.forEach(row => {
+      switch(row.status.toLowerCase()) {
+        case 'pending':
+          pendingComplaints = row.count;
+          break;
+        case 'resolved':
+          resolvedComplaints = row.count;
+          break;
+        case 'in_progress':
+          inProgressComplaints = row.count;
+          break;
+      }
+    });
+    
+    // Get complaints by category
+    const categoryResult = await query(`
+      SELECT 
+        category,
+        COUNT(*) as count 
+      FROM complaints 
+      GROUP BY category 
+      ORDER BY count DESC
+    `);
+    
+    const response = {
+      overview: {
+        total_complaints: totalComplaints,
+        pending_complaints: pendingComplaints,
+        resolved_complaints: resolvedComplaints,
+        in_progress_complaints: inProgressComplaints
+      },
+      categories: categoryResult || []
+    };
+    
+    console.log('✅ Complaint statistics fetched successfully:', response);
+    res.json(response);
+    
+  } catch (error) {
+    console.error('❌ Error fetching complaint statistics:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch complaint statistics',
+      details: error.message 
+    });
+  }
+});
+
 module.exports = router;

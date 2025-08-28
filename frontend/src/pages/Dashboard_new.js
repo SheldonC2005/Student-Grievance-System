@@ -146,7 +146,7 @@ const Dashboard = () => {
                 <p className="text-muted">
                   File a new grievance with secure blockchain tracking
                 </p>
-                <Link to="/submit-complaint">
+                <Link to="/complaints/submit">
                   <Button className="btn-gradient-primary">
                     Submit Complaint
                   </Button>
@@ -163,7 +163,7 @@ const Dashboard = () => {
                 <p className="text-muted">
                   Monitor the status and progress of your submissions
                 </p>
-                <Link to="/my-complaints">
+                <Link to="/complaints">
                   <Button className="btn-gradient-primary">
                     View My Complaints
                   </Button>
@@ -238,8 +238,8 @@ const Dashboard = () => {
                   <Row>
                     {stats.categories.slice(0, 6).map((category, index) => (
                       <Col md={4} key={index} className="mb-3">
-                        <div className="category-item d-flex align-items-center">
-                          <span className="fw-medium me-2">{category.category}</span>
+                        <div className="category-item d-flex justify-content-between align-items-center">
+                          <span className="fw-medium">{category.category}</span>
                           <span className="category-badge">{category.count}</span>
                         </div>
                       </Col>

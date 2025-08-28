@@ -34,7 +34,20 @@ export const verifyComplaintOnBlockchain = async (complaintId) => {
 export const getBlockchainStats = async () => {
   try {
     const response = await api.get('/blockchain/stats');
-    return response.data;
+    
+    // Extract stats from the response and normalize the data
+    const stats = response.data.stats || response.data;
+    
+    return {
+      totalComplaints: stats.totalComplaints || 0,
+      networkId: stats.chainId || stats.networkId || 'unknown',
+      contractAddress: stats.contractAddress || 'N/A',
+      connected: stats.connected || false,
+      mockData: stats.mockData || false,
+      totalBlocks: stats.totalBlocks || 0,
+      totalTransactions: stats.totalTransactions || 0,
+      averageGasUsed: stats.averageGasUsed || 0
+    };
   } catch (error) {
     throw error;
   }

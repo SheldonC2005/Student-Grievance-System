@@ -277,6 +277,34 @@ const MyComplaints = () => {
                 </Col>
               </Row>
 
+              {/* Admin Response Section */}
+              {(selectedComplaint.admin_message || selectedComplaint.admin_image_path) && (
+                <div className="mt-4">
+                  <h6>Admin Response</h6>
+                  <div className="border rounded p-3 bg-light">
+                    {selectedComplaint.admin_message && (
+                      <div className="mb-2">
+                        <strong>Message:</strong>
+                        <p className="mb-1 mt-1">{selectedComplaint.admin_message}</p>
+                      </div>
+                    )}
+                    {selectedComplaint.admin_image_path && (
+                      <div>
+                        <strong>Attachment:</strong>
+                        <div className="mt-2">
+                          <img 
+                            src={`http://localhost:5000/api/complaints/admin-response-image/${selectedComplaint.admin_image_path.split('/').pop()}`}
+                            alt="Admin response attachment"
+                            className="img-fluid rounded"
+                            style={{ maxHeight: '200px', maxWidth: '100%' }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {selectedComplaint.sentiment_score && (
                 <div className="mt-3">
                   <h6>AI Analysis</h6>

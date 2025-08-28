@@ -42,10 +42,12 @@ const ManageComplaints = () => {
       setLoading(true);
       setError('');
       
-      const response = await api.get('/api/complaints');
+      const response = await api.get('/complaints');
       
-      if (response.data) {
-        setComplaints(response.data);
+      if (response.data && response.data.success) {
+        setComplaints(response.data.complaints || []);
+      } else {
+        setComplaints([]);
       }
     } catch (err) {
       console.error('Error loading complaints:', err);
@@ -141,7 +143,7 @@ const ManageComplaints = () => {
         formData.append('adminImage', updateData.adminImage);
       }
 
-      const response = await api.patch(`/api/complaints/${selectedComplaint.id}/status`, formData, {
+      const response = await api.patch(`/complaints/${selectedComplaint.id}/status`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -171,7 +173,7 @@ const ManageComplaints = () => {
       setUpdatingComplaint(complaintId);
       setError('');
 
-      const response = await api.patch(`/api/complaints/${complaintId}/status`, {
+      const response = await api.patch(`/complaints/${complaintId}/status`, {
         status: newStatus
       });
 
