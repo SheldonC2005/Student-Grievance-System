@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert, Tabs, Tab, ButtonGroup } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useWeb3 } from '../context/Web3Context';
 
@@ -234,6 +235,17 @@ const Login = () => {
                       >
                         {loading ? 'Logging in...' : `Login as ${userType === 'admin' ? 'Admin' : 'Student'}`}
                       </Button>
+
+                      {userType === 'admin' && (
+                        <div className="text-center">
+                          <p className="text-muted small">
+                            Don't have an admin account?{' '}
+                            <Link to="/admin/register" className="text-decoration-none">
+                              Register here
+                            </Link>
+                          </p>
+                        </div>
+                      )}
                     </Form>
                   </Tab>
 

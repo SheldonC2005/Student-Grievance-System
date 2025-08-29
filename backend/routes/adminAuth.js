@@ -12,19 +12,19 @@ const router = express.Router();
  */
 router.post('/register', async (req, res) => {
   try {
-    const { admin_id, email, password, full_name, permissions } = req.body;
+    const { adminId, email, password, fullName, department, phoneNumber } = req.body;
 
     // Validation
-    if (!admin_id || !email || !password || !full_name) {
+    if (!adminId || !email || !password || !fullName) {
       return res.status(400).json({ 
-        error: 'Missing required fields: admin_id, email, password, full_name' 
+        error: 'Missing required fields: adminId, email, password, fullName' 
       });
     }
 
     // Check if admin already exists
     const existingAdmin = await query(
       'SELECT id FROM admins WHERE admin_id = ? OR email = ?',
-      [admin_id, email]
+      [adminId, email]
     );
 
     if (existingAdmin.length > 0) {
@@ -40,27 +40,31 @@ router.post('/register', async (req, res) => {
     // Insert new admin
     const result = await query(`
       INSERT INTO admins (
-        admin_id, email, password_hash, full_name, permissions, is_active
-      ) VALUES (?, ?, ?, ?, ?, 1)
+        admin_id, email, password_hash, full_name, department, phone_number, permissions, is_active
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 1)
     `, [
-      admin_id,
+      adminId,
       email,
       password_hash,
-      full_name,
-      permissions || 'block_create,block_view,complaint_manage'
+      fullName,
+      department || null,
+      phoneNumber || null,
+      'block_create,block_view,complaint_manage'
     ]);
 
-    console.log(`👨‍💼 New admin registered: ${admin_id} (${full_name})`);
+    console.log(`👨‍💼 New admin registered: ${adminId} (${fullName})`);
 
     res.status(201).json({
       success: true,
       message: 'Admin registered successfully',
       admin: {
         id: result.insertId,
-        admin_id,
+        adminId,
         email,
-        full_name,
-        permissions: permissions || 'block_create,block_view,complaint_manage'
+        fullName,
+        department: department || null,
+        phoneNumber: phoneNumber || null,
+        permissions: 'block_create,block_view,complaint_manage'
       }
     });
 

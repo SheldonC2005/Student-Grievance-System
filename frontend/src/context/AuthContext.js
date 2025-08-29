@@ -125,6 +125,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const adminRegister = async (adminData) => {
+    try {
+      const response = await api.post('/admin/auth/register', adminData);
+      const { message } = response.data;
+      toast.success(message || 'Admin registration successful!');
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.error || 'Admin registration failed';
+      toast.error(message);
+      return { success: false, error: message };
+    }
+  };
+
   const loginWithMetaMask = async (walletData) => {
     try {
       const response = await api.post('/auth/metamask', walletData);
@@ -188,6 +201,7 @@ export const AuthProvider = ({ children }) => {
     login,
     adminLogin,
     register,
+    adminRegister,
     loginWithMetaMask,
     logout,
     logoutAll,

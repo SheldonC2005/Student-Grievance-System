@@ -70,6 +70,8 @@ const initializeDatabase = () => {
           password_hash VARCHAR(255) NOT NULL,
           full_name VARCHAR(255) NOT NULL,
           role VARCHAR(20) DEFAULT 'admin',
+          department VARCHAR(100),
+          phone_number VARCHAR(20),
           wallet_address VARCHAR(42),
           permissions TEXT DEFAULT 'block_create,block_view,complaint_manage',
           is_active BOOLEAN DEFAULT 1,
@@ -137,6 +139,10 @@ const initializeDatabase = () => {
       db.run(`CREATE INDEX IF NOT EXISTS idx_block_metadata_created_at ON block_metadata(created_at)`);
       db.run(`CREATE INDEX IF NOT EXISTS idx_complaints_category ON complaints(category)`);
       db.run(`CREATE INDEX IF NOT EXISTS idx_complaints_status ON complaints(status)`);
+
+      // Add new columns to admins table if they don't exist (migration)
+      db.run(`ALTER TABLE admins ADD COLUMN department VARCHAR(100)`, () => {});
+      db.run(`ALTER TABLE admins ADD COLUMN phone_number VARCHAR(20)`, () => {});
 
       console.log('✅ SQLite database initialized successfully');
       resolve();

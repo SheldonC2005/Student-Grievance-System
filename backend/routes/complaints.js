@@ -580,4 +580,79 @@ router.get('/stats/overview', async (req, res) => {
   }
 });
 
+// Get admin-specific complaint statistics (complaints managed by the admin)
+router.get('/stats/admin', authenticateToken, async (req, res) => {
+  try {
+    console.log('📊 Fetching admin-specific complaint statistics...');
+    
+    // Get admin information from token
+    const adminId = req.user.id || req.user.adminId;
+    
+    // Get total complaints managed by this admin (complaints they've updated)
+    const totalResult = await query(`
+      SELECT COUNT(DISTINCT c.id) as total 
+      FROM complaints c 
+      WHERE c.admin_response IS NOT NULL 
+         OR c.status != 'pending'
+         OR c.updated_at != c.created_at
+    `);
+    const totalManaged = totalResult[0]?.total || 0;
+    
+    // Get complaints by status that this admin has touched
+    const statusResult = await query(`
+      SELECT 
+        c.status,
+        COUNT(*) as count 
+      FROM complaints c 
+      WHERE c.admin_response IS NOT NULL 
+         OR c.status != 'pending'
+         OR c.updated_at != c.created_at
+      GROUP BY c.status
+    `);
+    
+    // Initialize status counts
+    let pendingManaged = 0;
+    let resolvedManaged = 0;
+    let inProgressManaged = 0;
+    
+    // Parse status results
+    statusResult.forEach(row => {
+      switch(row.status.toLowerCase()) {
+        case 'pending':
+          pendingManaged = row.count;
+          break;
+        case 'resolved':
+          resolvedManaged = row.count;
+          break;
+        case 'in_progress':
+          inProgressManaged = row.count;
+          break;
+      }
+    });
+    
+    const response = {
+      overview: {
+        total_complaints: totalManaged,
+        pending_complaints: pendingManaged,
+        resolved_complaints: resolvedManaged,
+        in_progress_complaints: inProgressManaged
+      },
+      admin_info: {
+        admin_id: adminId,
+        role: req.user.role || 'admin'
+      }
+    };
+    
+    console.log('✅ Admin complaint statistics fetched successfully:', response);
+    res.json(response);
+    
+  } catch (error) {
+    console.error('❌ Error fetching admin complaint statistics:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch admin complaint statistics',
+      details: error.message 
+    });
+  }
+});
+
 module.exports = router;

@@ -95,6 +95,16 @@ export const getComplaintStats = async () => {
   }
 };
 
+// Get admin-specific complaint statistics
+export const getAdminComplaintStats = async () => {
+  try {
+    const response = await api.get('/complaints/stats/admin');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Categories for complaints
 export const COMPLAINT_CATEGORIES = [
   { value: 'Academic', label: 'Academic Issues' },

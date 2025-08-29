@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminRegister from './pages/AdminRegister';
 import ManageComplaints from './pages/ManageComplaints';
 import SubmitComplaint from './pages/SubmitComplaint';
 import Ledger from './pages/Ledger';
@@ -65,6 +66,10 @@ function AppContent() {
         <Route 
           path="/login" 
           element={!user ? <Login /> : <Navigate to="/dashboard" />} 
+        />
+        <Route 
+          path="/admin/register" 
+          element={!user ? <AdminRegister /> : <Navigate to="/dashboard" />} 
         />
         <Route 
           path="/dashboard" 
