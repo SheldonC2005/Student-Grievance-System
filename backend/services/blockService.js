@@ -393,93 +393,10 @@ class BlockService {
   }
 
   /**
-   * Get all blocks with metadata
+   * Get all blocks with pagination
    * @param {number} limit - Maximum number of blocks to return
    * @param {number} offset - Offset for pagination
    * @returns {Array} Array of block information
-   */
-  async getAllBlocks(limit = 10, offset = 0) {
-    try {
-      const blocksQuery = `
-        SELECT 
-          bm.*,
-          a.admin_id,
-          a.full_name as admin_name,
-          COUNT(cb.complaint_id) as actual_complaint_count
-        FROM block_metadata bm
-        LEFT JOIN admins a ON bm.created_by_admin_id = a.id
-        LEFT JOIN complaint_blocks cb ON bm.id = cb.block_id
-        GROUP BY bm.id
-        ORDER BY bm.block_number DESC
-        LIMIT ? OFFSET ?
-      `;
-
-      const blocks = await query(blocksQuery, [limit, offset]);
-      return blocks;
-
-    } catch (error) {
-      console.error('❌ Error fetching blocks:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get block details by block number
-   * @param {number} blockNumber - Block number to fetch
-   * @returns {Object} Detailed block information
-   */
-  async getBlockDetails(blockNumber) {
-    try {
-      const blockQuery = `
-        SELECT 
-          bm.*,
-          a.admin_id,
-          a.full_name as admin_name
-        FROM block_metadata bm
-        LEFT JOIN admins a ON bm.created_by_admin_id = a.id
-        WHERE bm.block_number = ?
-      `;
-
-      const blockResult = await query(blockQuery, [blockNumber]);
-      
-      if (blockResult.length === 0) {
-        throw new Error(`Block ${blockNumber} not found`);
-      }
-
-      const block = blockResult[0];
-
-      // Get complaints in this block
-      const complaintsQuery = `
-        SELECT 
-          cb.*,
-          c.title,
-          c.description,
-          c.category,
-          c.status,
-          c.created_at
-        FROM complaint_blocks cb
-        JOIN complaints c ON cb.complaint_id = c.id
-        WHERE cb.block_id = ?
-        ORDER BY cb.inclusion_order ASC
-      `;
-
-      const complaints = await query(complaintsQuery, [block.id]);
-
-      return {
-        ...block,
-        complaints,
-        categoryStats: JSON.parse(block.category_stats || '{}'),
-        sentimentStats: JSON.parse(block.sentiment_stats || '{}')
-      };
-
-    } catch (error) {
-      console.error('❌ Error fetching block details:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get all blocks with pagination
    */
   async getAllBlocks(limit = 10, offset = 0) {
     try {
@@ -516,6 +433,8 @@ class BlockService {
 
   /**
    * Get detailed information about a specific block
+   * @param {number} blockNumber - Block number to fetch
+   * @returns {Object} Detailed block information
    */
   async getBlockDetails(blockNumber) {
     try {
@@ -548,11 +467,11 @@ class BlockService {
           c.created_at
         FROM complaint_blocks cb
         INNER JOIN complaints c ON cb.complaint_id = c.id
-        WHERE cb.block_number = ?
+        WHERE cb.block_id = ?
         ORDER BY cb.inclusion_order ASC
       `;
 
-      const complaints = await query(complaintsQuery, [blockNumber]);
+      const complaints = await query(complaintsQuery, [block.id]);
 
       // Parse JSON fields
       const categoryStats = typeof block.category_stats === 'string' 

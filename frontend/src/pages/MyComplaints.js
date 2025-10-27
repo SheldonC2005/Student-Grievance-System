@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Badge, Spinner, Alert, Modal } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-import { useAuth } from '../context/AuthContext';
 import { 
   getMyComplaints, 
   escalateComplaint,
@@ -12,7 +11,6 @@ import {
 } from '../services/complaintService';
 
 const MyComplaints = () => {
-  const { user } = useAuth();
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [escalating, setEscalating] = useState(null);

@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Card, Form, Button, Alert, Badge, ListGroup, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { useAuth } from '../context/AuthContext';
 import { useWeb3 } from '../context/Web3Context';
 import { 
   submitComplaint, 
@@ -12,7 +11,6 @@ import {
 } from '../services/complaintService';
 
 const SubmitComplaint = () => {
-  const { user } = useAuth();
   const { isConnected } = useWeb3();
   const navigate = useNavigate();
 
@@ -31,21 +29,7 @@ const SubmitComplaint = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Debounced similar complaint check and sentiment analysis
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (formData.description.length > 20 && formData.category) {
-        checkForSimilarComplaints();
-      }
-      if (formData.description.length > 10) {
-        performSentimentAnalysis();
-      }
-    }, 1000);
-
-    return () => clearTimeout(timeoutId);
-  }, [formData.description, formData.category]);
-
-  const checkForSimilarComplaints = async () => {
+  const checkForSimilarComplaints = useCallback(async () => {
     if (!formData.description.trim() || !formData.category) return;
 
     setCheckingSimilar(true);
@@ -58,9 +42,9 @@ const SubmitComplaint = () => {
     } finally {
       setCheckingSimilar(false);
     }
-  };
+  }, [formData.description, formData.category]);
 
-  const performSentimentAnalysis = async () => {
+  const performSentimentAnalysis = useCallback(async () => {
     if (!formData.description.trim()) {
       setSentimentAnalysis(null);
       return;
@@ -76,7 +60,21 @@ const SubmitComplaint = () => {
     } finally {
       setAnalyzingSentiment(false);
     }
-  };
+  }, [formData.description]);
+
+  // Debounced similar complaint check and sentiment analysis
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (formData.description.length > 20 && formData.category) {
+        checkForSimilarComplaints();
+      }
+      if (formData.description.length > 10) {
+        performSentimentAnalysis();
+      }
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.description, formData.category, checkForSimilarComplaints, performSentimentAnalysis]);
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -101,7 +99,7 @@ const SubmitComplaint = () => {
     setError('');
 
     try {
-      const result = await submitComplaint(formData);
+      await submitComplaint(formData);
       
       setSuccess('Complaint submitted successfully!');
       toast.success('Complaint submitted and recorded on blockchain!');

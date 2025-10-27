@@ -655,4 +655,106 @@ router.get('/stats/admin', authenticateToken, async (req, res) => {
   }
 });
 
+// Get recent admin activity (last 5 actions)
+router.get('/admin/recent-activity', authenticateToken, async (req, res) => {
+  try {
+    console.log('📋 Fetching recent admin activity...');
+    
+    const adminId = req.user.id || req.user.adminId;
+    
+    // Get recent complaint updates
+    const recentComplaintUpdates = await query(`
+      SELECT 
+        c.id,
+        c.title,
+        c.status,
+        c.updated_at,
+        c.created_at,
+        'complaint_update' as action_type,
+        u.full_name as student_name,
+        u.student_id
+      FROM complaints c
+      JOIN users u ON c.student_id = u.student_id
+      WHERE c.admin_message IS NOT NULL 
+         OR c.status != 'pending'
+         OR c.updated_at != c.created_at
+      ORDER BY c.updated_at DESC
+      LIMIT 5
+    `);
+    
+    // Get recent block creations
+    const recentBlockCreations = await query(`
+      SELECT 
+        bm.block_number,
+        bm.complaint_count,
+        bm.top_category,
+        bm.created_at,
+        'block_creation' as action_type,
+        a.admin_id,
+        a.full_name as admin_name
+      FROM block_metadata bm
+      LEFT JOIN admins a ON bm.created_by_admin_id = a.id
+      ORDER BY bm.created_at DESC
+      LIMIT 5
+    `);
+    
+    // Combine and sort all activities by timestamp
+    const allActivities = [
+      ...recentComplaintUpdates.map(activity => ({
+        id: activity.id,
+        type: activity.action_type,
+        title: activity.title,
+        status: activity.status,
+        studentName: activity.student_name,
+        studentId: activity.student_id,
+        timestamp: activity.updated_at,
+        timeAgo: getTimeAgo(activity.updated_at)
+      })),
+      ...recentBlockCreations.map(activity => ({
+        id: activity.block_number,
+        type: activity.action_type,
+        blockNumber: activity.block_number,
+        complaintCount: activity.complaint_count,
+        topCategory: activity.top_category,
+        adminName: activity.admin_name,
+        timestamp: activity.created_at,
+        timeAgo: getTimeAgo(activity.created_at)
+      }))
+    ];
+    
+    // Sort by timestamp descending and take top 5
+    allActivities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const activities = allActivities.slice(0, 5);
+    
+    console.log('✅ Recent admin activity fetched:', activities.length, 'activities');
+    res.json({
+      success: true,
+      activities
+    });
+    
+  } catch (error) {
+    console.error('❌ Error fetching recent admin activity:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch recent admin activity',
+      details: error.message 
+    });
+  }
+});
+
+// Helper function to calculate time ago
+function getTimeAgo(timestamp) {
+  const now = new Date();
+  const past = new Date(timestamp);
+  const diffMs = now - past;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  return past.toLocaleDateString();
+}
+
 module.exports = router;

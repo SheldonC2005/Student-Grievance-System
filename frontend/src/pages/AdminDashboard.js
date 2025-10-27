@@ -3,7 +3,7 @@ import { Container, Row, Col, Card, Button, Alert, Spinner } from 'react-bootstr
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useWeb3 } from '../context/Web3Context';
-import { getComplaintStats, getAdminComplaintStats } from '../services/complaintService';
+import { getComplaintStats, getAdminComplaintStats, getRecentAdminActivity } from '../services/complaintService';
 import { getBlockchainStats } from '../services/blockchainService';
 import './Dashboard.css';
 
@@ -14,6 +14,7 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [adminStats, setAdminStats] = useState(null);
   const [blockchainStats, setBlockchainStats] = useState(null);
+  const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -24,22 +25,36 @@ const AdminDashboard = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
+      setError('');
       
-      // Load complaint statistics
-      const complaintData = await getComplaintStats();
+      // Load all data in parallel
+      const [complaintData, adminComplaintData, blockchainData, activityData] = await Promise.all([
+        getComplaintStats().catch(err => {
+          console.error('Failed to load complaint stats:', err);
+          return null;
+        }),
+        getAdminComplaintStats().catch(err => {
+          console.error('Failed to load admin stats:', err);
+          return null;
+        }),
+        getBlockchainStats().catch(err => {
+          console.error('Failed to load blockchain stats:', err);
+          return null;
+        }),
+        getRecentAdminActivity().catch(err => {
+          console.error('Failed to load recent activity:', err);
+          return { activities: [] };
+        })
+      ]);
+      
       setStats(complaintData);
-      
-      // Load admin-specific statistics
-      const adminComplaintData = await getAdminComplaintStats();
       setAdminStats(adminComplaintData);
-      
-      // Load blockchain statistics
-      const blockchainData = await getBlockchainStats();
       setBlockchainStats(blockchainData);
+      setRecentActivity(activityData?.activities || []);
       
     } catch (err) {
       console.error('Error loading dashboard data:', err);
-      setError('Failed to load dashboard data');
+      setError('Failed to load some dashboard data');
     } finally {
       setLoading(false);
     }
@@ -257,10 +272,51 @@ const AdminDashboard = () => {
                 <h5 className="mb-0">🕒 Recent Admin Activity</h5>
               </Card.Header>
               <Card.Body>
-                <div className="text-center text-muted py-4">
-                  <p>Recent activities will be displayed here</p>
-                  <small>Complaint updates, block creations, system events</small>
-                </div>
+                {recentActivity && recentActivity.length > 0 ? (
+                  <div className="list-group list-group-flush">
+                    {recentActivity.map((act, index) => (
+                      act.type === 'complaint_update' ? (
+                        <Link
+                          key={`${act.type}-${act.id}-${index}`}
+                          to={`/admin/complaints?complaintId=${act.id}`}
+                          className="list-group-item list-group-item-action d-flex justify-content-between align-items-start"
+                        >
+                          <div>
+                            <div className="fw-bold">
+                              📝 Complaint Update — {act.title}
+                            </div>
+                            <div className="small text-muted">
+                              {act.studentName || act.studentId}
+                              {act.status ? ` • Status: ${act.status}` : ''}
+                            </div>
+                          </div>
+                          <div className="text-end small text-muted">{act.timeAgo || new Date(act.timestamp).toLocaleString()}</div>
+                        </Link>
+                      ) : (
+                        <div
+                          key={`${act.type}-${act.id}-${index}`}
+                          className="list-group-item d-flex justify-content-between align-items-start"
+                        >
+                          <div>
+                            <div className="fw-bold">
+                              📦 Block Created — Block #{act.blockNumber} with {act.complaintCount} complaints
+                            </div>
+                            <div className="small text-muted">
+                              {act.topCategory ? `Category: ${act.topCategory}` : ''}
+                              {act.adminName ? ` • By: ${act.adminName}` : ''}
+                            </div>
+                          </div>
+                          <div className="text-end small text-muted">{act.timeAgo || new Date(act.timestamp).toLocaleString()}</div>
+                        </div>
+                      )
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-muted py-4">
+                    <p>No recent admin activity</p>
+                    <small>Complaint updates, block creations, system events will appear here</small>
+                  </div>
+                )}
               </Card.Body>
             </Card>
           </Col>

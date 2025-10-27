@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import detectEthereumProvider from '@metamask/detect-provider';
 import { toast } from 'react-toastify';
 
@@ -19,40 +19,45 @@ export const Web3Provider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    initializeProvider();
-  }, []);
-
-  const initializeProvider = async () => {
+  const initializeProvider = useCallback(async () => {
     try {
-      const detectedProvider = await detectEthereumProvider();
-      
-      if (detectedProvider) {
-        setProvider(detectedProvider);
+      // Check if MetaMask is installed by checking window.ethereum
+      if (typeof window.ethereum !== 'undefined') {
+        const detectedProvider = await detectEthereumProvider({ timeout: 3000 });
         
-        // Check if already connected
-        const accounts = await detectedProvider.request({ method: 'eth_accounts' });
-        if (accounts.length > 0) {
-          setAccount(accounts[0]);
-          setIsConnected(true);
+        if (detectedProvider && detectedProvider === window.ethereum) {
+          setProvider(detectedProvider);
           
-          // Get chain ID
-          const chainId = await detectedProvider.request({ method: 'eth_chainId' });
-          setChainId(chainId);
-        }
+          // Check if already connected
+          const accounts = await detectedProvider.request({ method: 'eth_accounts' });
+          if (accounts.length > 0) {
+            setAccount(accounts[0]);
+            setIsConnected(true);
+            
+            // Get chain ID
+            const chainId = await detectedProvider.request({ method: 'eth_chainId' });
+            setChainId(chainId);
+          }
 
-        // Listen for account changes
-        detectedProvider.on('accountsChanged', handleAccountsChanged);
-        detectedProvider.on('chainChanged', handleChainChanged);
+          // Listen for account changes
+          detectedProvider.on('accountsChanged', handleAccountsChanged);
+          detectedProvider.on('chainChanged', handleChainChanged);
+        } else {
+          console.log('Multiple wallet providers detected. Please ensure MetaMask is your default wallet.');
+        }
       } else {
-        console.log('MetaMask not detected');
+        console.log('MetaMask not detected - window.ethereum is undefined');
       }
     } catch (error) {
       console.error('Error initializing provider:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    initializeProvider();
+  }, [initializeProvider]);
 
   const handleAccountsChanged = (accounts) => {
     if (accounts.length > 0) {
@@ -72,21 +77,40 @@ export const Web3Provider = ({ children }) => {
   };
 
   const connectWallet = async () => {
-    if (!provider) {
+    // Check if MetaMask is installed
+    if (typeof window.ethereum === 'undefined') {
       toast.error('MetaMask not installed. Please install MetaMask to continue.');
       return { success: false, error: 'MetaMask not installed' };
     }
 
+    // Initialize provider if not already done
+    if (!provider) {
+      try {
+        const detectedProvider = await detectEthereumProvider({ timeout: 3000 });
+        if (detectedProvider) {
+          setProvider(detectedProvider);
+        } else {
+          toast.error('MetaMask not installed. Please install MetaMask to continue.');
+          return { success: false, error: 'MetaMask not installed' };
+        }
+      } catch (error) {
+        toast.error('Failed to detect MetaMask');
+        return { success: false, error: 'Failed to detect MetaMask' };
+      }
+    }
+
+    const providerToUse = provider || window.ethereum;
+
     try {
       // Request account access
-      const accounts = await provider.request({ method: 'eth_requestAccounts' });
+      const accounts = await providerToUse.request({ method: 'eth_requestAccounts' });
       
       if (accounts.length > 0) {
         setAccount(accounts[0]);
         setIsConnected(true);
         
         // Get chain ID
-        const chainId = await provider.request({ method: 'eth_chainId' });
+        const chainId = await providerToUse.request({ method: 'eth_chainId' });
         setChainId(chainId);
         
         toast.success('Wallet connected successfully!');

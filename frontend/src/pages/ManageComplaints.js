@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Table, Button, Form, Alert, Spinner, Badge, Modal } from 'react-bootstrap';
-import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 const ManageComplaints = () => {
-  const { user } = useAuth();
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

@@ -111,46 +111,6 @@ router.get('/', authenticateToken, requireRole(['admin']), async (req, res) => {
 });
 
 /**
- * Get detailed information about a specific block
- * GET /api/admin/blocks/:blockNumber
- */
-router.get('/:blockNumber', authenticateToken, requireRole(['admin']), async (req, res) => {
-  try {
-    const blockNumber = parseInt(req.params.blockNumber);
-
-    if (isNaN(blockNumber) || blockNumber < 1) {
-      return res.status(400).json({
-        error: 'Invalid block number'
-      });
-    }
-
-    console.log(`🔍 Block details requested: ${blockNumber} by admin: ${req.user.admin_id}`);
-
-    const blockDetails = await blockService.getBlockDetails(blockNumber);
-
-    res.json({
-      success: true,
-      block: blockDetails
-    });
-
-  } catch (error) {
-    console.error('❌ Error fetching block details:', error);
-    
-    if (error.message.includes('not found')) {
-      return res.status(404).json({
-        error: 'Block not found',
-        details: error.message
-      });
-    }
-
-    res.status(500).json({
-      error: 'Failed to fetch block details',
-      details: error.message
-    });
-  }
-});
-
-/**
  * Get block statistics
  * GET /api/admin/blocks/stats/overview
  */
@@ -257,12 +217,12 @@ router.get('/search', authenticateToken, requireRole(['admin']), async (req, res
     }
 
     if (from_date) {
-      whereConditions.push('bm.created_at >= ?');
+      whereConditions.push('DATE(bm.created_at) >= DATE(?)');
       queryParams.push(from_date);
     }
 
     if (to_date) {
-      whereConditions.push('bm.created_at <= ?');
+      whereConditions.push('DATE(bm.created_at) <= DATE(?)');
       queryParams.push(to_date);
     }
 
@@ -276,7 +236,9 @@ router.get('/search', authenticateToken, requireRole(['admin']), async (req, res
       queryParams.push(parseInt(max_complaints));
     }
 
-    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+    const whereClause = whereConditions.length > 0 
+      ? `WHERE ${whereConditions.join(' AND ')}`
+      : '';
 
     const searchQuery = `
       SELECT 
@@ -286,7 +248,7 @@ router.get('/search', authenticateToken, requireRole(['admin']), async (req, res
       FROM block_metadata bm
       LEFT JOIN admins a ON bm.created_by_admin_id = a.id
       ${whereClause}
-      ORDER BY bm.block_number DESC
+      ORDER BY bm.created_at DESC
       LIMIT 50
     `;
 
@@ -295,7 +257,6 @@ router.get('/search', authenticateToken, requireRole(['admin']), async (req, res
     res.json({
       success: true,
       results,
-      searchCriteria: req.query,
       count: results.length
     });
 
@@ -303,6 +264,46 @@ router.get('/search', authenticateToken, requireRole(['admin']), async (req, res
     console.error('❌ Error searching blocks:', error);
     res.status(500).json({
       error: 'Failed to search blocks',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * Get detailed information about a specific block
+ * GET /api/admin/blocks/:blockNumber
+ */
+router.get('/:blockNumber', authenticateToken, requireRole(['admin']), async (req, res) => {
+  try {
+    const blockNumber = parseInt(req.params.blockNumber);
+
+    if (isNaN(blockNumber) || blockNumber < 1) {
+      return res.status(400).json({
+        error: 'Invalid block number'
+      });
+    }
+
+    console.log(`🔍 Block details requested: ${blockNumber} by admin: ${req.user.admin_id}`);
+
+    const blockDetails = await blockService.getBlockDetails(blockNumber);
+
+    res.json({
+      success: true,
+      block: blockDetails
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching block details:', error);
+    
+    if (error.message.includes('not found')) {
+      return res.status(404).json({
+        error: 'Block not found',
+        details: error.message
+      });
+    }
+
+    res.status(500).json({
+      error: 'Failed to fetch block details',
       details: error.message
     });
   }

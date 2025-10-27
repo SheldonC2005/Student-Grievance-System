@@ -105,6 +105,16 @@ export const getAdminComplaintStats = async () => {
   }
 };
 
+// Get recent admin activity
+export const getRecentAdminActivity = async () => {
+  try {
+    const response = await api.get('/complaints/admin/recent-activity');
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Categories for complaints
 export const COMPLAINT_CATEGORIES = [
   { value: 'Academic', label: 'Academic Issues' },

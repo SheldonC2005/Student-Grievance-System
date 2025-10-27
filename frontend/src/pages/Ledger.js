@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Card, Table, Badge, Button, Form, Alert, Spinner } from 'react-bootstrap';
 import { 
   getAllComplaints,
@@ -22,11 +22,7 @@ const Ledger = () => {
   });
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    loadLedgerData();
-  }, [filters]);
-
-  const loadLedgerData = async () => {
+  const loadLedgerData = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -47,7 +43,11 @@ const Ledger = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, activeTab]);
+
+  useEffect(() => {
+    loadLedgerData();
+  }, [loadLedgerData]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);

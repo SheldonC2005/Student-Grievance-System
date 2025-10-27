@@ -56,11 +56,15 @@ router.post('/register', [
       { expiresIn: '24h' }
     );
 
+    // Generate session ID
+    const sessionId = `session_${newUser[0].id}_${Date.now()}`;
+
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
       user: newUser[0],
-      token
+      token,
+      sessionId
     });
 
   } catch (error) {
@@ -110,6 +114,9 @@ router.post('/login', [
       { expiresIn: '24h' }
     );
 
+    // Generate session ID
+    const sessionId = `session_${user.id}_${Date.now()}`;
+
     // Return user data (excluding password)
     const userData = {
       id: user.id,
@@ -125,7 +132,8 @@ router.post('/login', [
       success: true,
       message: 'Login successful',
       user: userData,
-      token
+      token,
+      sessionId
     });
 
   } catch (error) {
