@@ -541,40 +541,51 @@ const BlockManagement = () => {
                     </Col>
                     <Col md={6}>
                       <h6>Category Statistics</h6>
-                      {selectedBlock.categoryStats && Object.entries(selectedBlock.categoryStats).map(([category, count]) => (
-                        <div key={category} className="d-flex justify-content-between">
-                          <Badge variant="secondary">{category}</Badge>
-                          <span>{count}</span>
-                        </div>
-                      ))}
+                      {selectedBlock.categoryStats && Object.entries(selectedBlock.categoryStats).map(([category, stats]) => {
+                        // Handle both flat count and nested object structure
+                        const count = typeof stats === 'object' && stats.count !== undefined ? stats.count : stats;
+                        return (
+                          <div key={category} className="d-flex justify-content-between mb-2">
+                            <Badge variant="secondary">{category}</Badge>
+                            <span>{count} complaint{count !== 1 ? 's' : ''}</span>
+                          </div>
+                        );
+                      })}
+                      {(!selectedBlock.categoryStats || Object.keys(selectedBlock.categoryStats).length === 0) && (
+                        <p className="text-muted">No category data available</p>
+                      )}
                     </Col>
                   </Row>
 
                   <h6>Complaints in this Block</h6>
-                  <Table striped hover size="sm">
-                    <thead>
-                      <tr>
-                        <th>Order</th>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>Category</th>
-                        <th>Status</th>
-                        <th>Created</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedBlock.complaints?.map((complaint) => (
-                        <tr key={complaint.complaint_id}>
-                          <td>{complaint.inclusion_order}</td>
-                          <td>{complaint.complaint_id}</td>
-                          <td>{complaint.title}</td>
-                          <td><Badge variant="info">{complaint.category}</Badge></td>
-                          <td><Badge variant="warning">{complaint.status}</Badge></td>
-                          <td>{new Date(complaint.created_at).toLocaleDateString()}</td>
+                  {selectedBlock.complaints && selectedBlock.complaints.length > 0 ? (
+                    <Table striped hover size="sm">
+                      <thead>
+                        <tr>
+                          <th>Order</th>
+                          <th>ID</th>
+                          <th>Title</th>
+                          <th>Category</th>
+                          <th>Status</th>
+                          <th>Created</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </Table>
+                      </thead>
+                      <tbody>
+                        {selectedBlock.complaints.map((complaint) => (
+                          <tr key={complaint.complaint_id}>
+                            <td>{complaint.inclusion_order}</td>
+                            <td>{complaint.complaint_id}</td>
+                            <td>{complaint.title}</td>
+                            <td><Badge variant="info">{complaint.category}</Badge></td>
+                            <td><Badge variant="warning">{complaint.status}</Badge></td>
+                            <td>{new Date(complaint.created_at).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  ) : (
+                    <p className="text-muted">No complaints found in this block</p>
+                  )}
                 </div>
               )}
             </Modal.Body>

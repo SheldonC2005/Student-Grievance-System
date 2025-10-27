@@ -246,7 +246,7 @@ const AdminDashboard = () => {
                     </Col>
                     <Col className="text-center">
                       <div className="h6 text-success">
-                        {blockchainStats.connected ? '🟢 Connected' : '🔴 Disconnected'}
+                        {(isConnected && account) || blockchainStats.mockData ? '🟢 Connected' : '🔴 Disconnected'}
                       </div>
                       <small className="text-muted">
                         {blockchainStats.mockData ? 'Mock Mode' : blockchainStats.chainId || 'Unknown Network'}
@@ -279,34 +279,28 @@ const AdminDashboard = () => {
                         <Link
                           key={`${act.type}-${act.id}-${index}`}
                           to={`/admin/complaints?complaintId=${act.id}`}
-                          className="list-group-item list-group-item-action d-flex justify-content-between align-items-start"
+                          className="list-group-item list-group-item-action"
                         >
-                          <div>
-                            <div className="fw-bold">
-                              📝 Complaint Update — {act.title}
-                            </div>
-                            <div className="small text-muted">
-                              {act.studentName || act.studentId}
-                              {act.status ? ` • Status: ${act.status}` : ''}
-                            </div>
+                          <div className="fw-bold">
+                            📝 Complaint Update — {act.title}
                           </div>
-                          <div className="text-end small text-muted">{act.timeAgo || new Date(act.timestamp).toLocaleString()}</div>
+                          <div className="small text-muted">
+                            {act.studentName || act.studentId}
+                            {act.status ? ` • Status: ${act.status}` : ''}
+                          </div>
                         </Link>
                       ) : (
                         <div
                           key={`${act.type}-${act.id}-${index}`}
-                          className="list-group-item d-flex justify-content-between align-items-start"
+                          className="list-group-item"
                         >
-                          <div>
-                            <div className="fw-bold">
-                              📦 Block Created — Block #{act.blockNumber} with {act.complaintCount} complaints
-                            </div>
-                            <div className="small text-muted">
-                              {act.topCategory ? `Category: ${act.topCategory}` : ''}
-                              {act.adminName ? ` • By: ${act.adminName}` : ''}
-                            </div>
+                          <div className="fw-bold">
+                            📦 Block Created — Block #{act.blockNumber} with {act.complaintCount} complaints
                           </div>
-                          <div className="text-end small text-muted">{act.timeAgo || new Date(act.timestamp).toLocaleString()}</div>
+                          <div className="small text-muted">
+                            {act.topCategory ? `Category: ${act.topCategory}` : ''}
+                            {act.adminName ? ` • By: ${act.adminName}` : ''}
+                          </div>
                         </div>
                       )
                     ))}

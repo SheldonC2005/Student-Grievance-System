@@ -18,6 +18,7 @@ export const Web3Provider = ({ children }) => {
   const [chainId, setChainId] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isMockMode, setIsMockMode] = useState(false);
 
   const initializeProvider = useCallback(async () => {
     try {
@@ -79,8 +80,11 @@ export const Web3Provider = ({ children }) => {
   const connectWallet = async () => {
     // Check if MetaMask is installed
     if (typeof window.ethereum === 'undefined') {
-      toast.error('MetaMask not installed. Please install MetaMask to continue.');
-      return { success: false, error: 'MetaMask not installed' };
+      // MetaMask not available - offer mock mode
+      toast.warning('MetaMask not detected. Using mock wallet for development.', {
+        autoClose: 3000
+      });
+      return connectMockWallet();
     }
 
     // Initialize provider if not already done
@@ -90,12 +94,12 @@ export const Web3Provider = ({ children }) => {
         if (detectedProvider) {
           setProvider(detectedProvider);
         } else {
-          toast.error('MetaMask not installed. Please install MetaMask to continue.');
-          return { success: false, error: 'MetaMask not installed' };
+          toast.warning('MetaMask not detected. Using mock wallet for development.');
+          return connectMockWallet();
         }
       } catch (error) {
-        toast.error('Failed to detect MetaMask');
-        return { success: false, error: 'Failed to detect MetaMask' };
+        toast.warning('Failed to detect MetaMask. Using mock wallet for development.');
+        return connectMockWallet();
       }
     }
 
@@ -108,6 +112,7 @@ export const Web3Provider = ({ children }) => {
       if (accounts.length > 0) {
         setAccount(accounts[0]);
         setIsConnected(true);
+        setIsMockMode(false);
         
         // Get chain ID
         const chainId = await providerToUse.request({ method: 'eth_chainId' });
@@ -126,10 +131,29 @@ export const Web3Provider = ({ children }) => {
     }
   };
 
+  const connectMockWallet = () => {
+    // Generate a mock Ethereum address for development
+    const mockAccount = '0x' + Array.from({ length: 40 }, () => 
+      Math.floor(Math.random() * 16).toString(16)
+    ).join('');
+    
+    setAccount(mockAccount);
+    setIsConnected(true);
+    setIsMockMode(true);
+    setChainId('0x539'); // Mock Ganache chain ID
+    
+    toast.success('Mock wallet connected for development! 🔧', {
+      autoClose: 3000
+    });
+    
+    return { success: true, account: mockAccount, isMock: true };
+  };
+
   const disconnectWallet = () => {
     setAccount(null);
     setIsConnected(false);
     setChainId(null);
+    setIsMockMode(false);
     toast.info('Wallet disconnected');
   };
 
@@ -193,6 +217,10 @@ export const Web3Provider = ({ children }) => {
   };
 
   const getNetworkName = (chainId) => {
+    if (isMockMode) {
+      return 'Mock Development Network';
+    }
+    
     switch (chainId) {
       case '0x1':
         return 'Ethereum Mainnet';
@@ -216,6 +244,7 @@ export const Web3Provider = ({ children }) => {
     chainId,
     isConnected,
     isLoading,
+    isMockMode,
     connectWallet,
     disconnectWallet,
     signMessage,

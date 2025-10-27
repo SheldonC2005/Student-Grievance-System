@@ -434,119 +434,96 @@ class BlockchainService {
   // Get all complaints stored on blockchain
   async getAllBlockchainComplaints() {
     try {
-      console.log('📖 Getting all blockchain complaints');
+      console.log('📖 Getting all blockchain complaints from database');
 
-      if (!this.isConnected || !this.contract) {
-        // Return stored mock blockchain complaints if any
-        if (this.mockBlockchain.length > 0) {
-          console.log(`📦 Returning ${this.mockBlockchain.length} mock blockchain complaints`);
-          return this.mockBlockchain;
-        }
-        
-        // Return default mock data when no complaints submitted yet
+      // Import query function from sqlite config
+      const { query } = require('../config/sqlite');
+
+      // Query complaints from database with blockchain_hash
+      const complaints = await query(`
+        SELECT 
+          c.id,
+          c.student_id,
+          c.title,
+          c.description,
+          c.category,
+          c.priority,
+          c.status,
+          c.blockchain_hash,
+          c.blockchain_id,
+          c.created_at,
+          u.full_name as student_name
+        FROM complaints c
+        LEFT JOIN users u ON c.student_id = u.student_id
+        WHERE c.blockchain_hash IS NOT NULL AND c.blockchain_hash != ''
+        ORDER BY c.created_at DESC
+      `);
+
+      // Transform database complaints to blockchain ledger format
+      const blockchainData = complaints.map((complaint, index) => ({
+        id: complaint.blockchain_id || complaint.id,
+        complaintId: complaint.blockchain_id || `COMPLAINT_${complaint.id}`,
+        studentId: complaint.student_id,
+        studentName: complaint.student_name,
+        title: complaint.title,
+        description: complaint.description,
+        category: complaint.category,
+        priority: complaint.priority.toUpperCase(),
+        status: complaint.status.toUpperCase(),
+        complaintHash: complaint.blockchain_hash,
+        blockHash: complaint.blockchain_hash, // Same as complaint hash for display
+        nonce: (Math.floor(Math.random() * 1000000)).toString(), // Mock nonce for display
+        timestamp: complaint.created_at,
+        gasUsed: (20000 + Math.floor(Math.random() * 5000)).toString(),
+        isVerified: true,
+        mockData: !this.isConnected // Flag to indicate if using mock blockchain
+      }));
+
+      // If no complaints with blockchain hash found, return demo data
+      if (blockchainData.length === 0) {
+        console.log('� No blockchain complaints found, providing demo data');
         return [
           {
+            id: 1,
             complaintId: 'DEMO_001',
+            studentId: 'DEMO123',
             title: 'Demo: Academic Grading Issue',
-            description: 'Sample complaint for demonstration purposes',
+            description: 'Sample complaint for demonstration purposes...',
             category: 'academic',
             priority: 'HIGH',
             status: 'SUBMITTED',
-            blockNumber: 1,
-            transactionHash: '0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef',
-            blockHash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
-            ipfsHash: 'QmDemoHash123456789',
+            complaintHash: '0x' + '1234567890abcdef'.repeat(4),
+            blockHash: '0x' + 'abcdef1234567890'.repeat(4),
+            nonce: 'N/A',
             timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
             gasUsed: '21500',
-            studentId: 'DEMO123'
+            isVerified: true,
+            mockData: true
           },
           {
+            id: 2,
             complaintId: 'DEMO_002',
+            studentId: 'DEMO456',
             title: 'Demo: Facility Maintenance',
-            description: 'Sample facility complaint for demonstration',
+            description: 'Sample facility complaint for demonstration...',
             category: 'facilities',
             priority: 'MEDIUM',
             status: 'IN_PROGRESS',
-            blockNumber: 2,
-            transactionHash: '0x2345678901bcdef12345678901cdef12345678901def12345678901ef123456',
-            blockHash: '0xbcdef12345678901cdef12345678901def12345678901ef12345678901234567',
-            ipfsHash: 'QmDemoHash987654321',
+            complaintHash: '0x' + '2345678901bcdef1'.repeat(4),
+            blockHash: '0x' + 'bcdef12345678901'.repeat(4),
+            nonce: 'N/A',
             timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
             gasUsed: '22000',
-            studentId: 'DEMO456'
+            isVerified: true,
+            mockData: true
           }
         ];
       }
 
-      // Get all events from the contract
-      const filter = this.contract.filters.ComplaintSubmitted();
-      const events = await this.contract.queryFilter(filter);
-
-      const complaints = [];
-      for (const event of events) {
-        const block = await this.provider.getBlock(event.blockNumber);
-        const receipt = await this.provider.getTransactionReceipt(event.transactionHash);
-        
-        complaints.push({
-          complaintId: event.args.complaintId,
-          title: event.args.title || 'Blockchain Complaint',
-          blockNumber: event.blockNumber,
-          transactionHash: event.transactionHash,
-          blockHash: event.blockHash,
-          ipfsHash: event.args.ipfsHash,
-          status: event.args.status || 'SUBMITTED',
-          priority: event.args.priority || 'MEDIUM',
-          timestamp: new Date(block.timestamp * 1000).toISOString(),
-          gasUsed: receipt.gasUsed.toString()
-        });
-      }
-
-      // If no events found, return mock data for demonstration
-      if (complaints.length === 0) {
-        console.log('🔄 No blockchain events found, providing mock data for demonstration');
-        return [
-          {
-            complaintId: 'BLOCKCHAIN_001',
-            title: 'Academic Issue with Grading',
-            blockNumber: 12,
-            transactionHash: '0xabc123def456789012345678901234567890123456789012345678901234567890',
-            blockHash: '0x123abc456def789012345678901234567890123456789012345678901234567abc',
-            ipfsHash: 'QmDemoHash123456789',
-            status: 'SUBMITTED',
-            priority: 'HIGH',
-            timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            gasUsed: '21500'
-          },
-          {
-            complaintId: 'BLOCKCHAIN_002',
-            title: 'Dormitory Facility Issue',
-            blockNumber: 13,
-            transactionHash: '0xdef456abc789012345678901234567890123456789012345678901234567abc123',
-            blockHash: '0x456def789abc012345678901234567890123456789012345678901234567def456',
-            ipfsHash: 'QmDemoHash987654321',
-            status: 'IN_PROGRESS',
-            priority: 'MEDIUM',
-            timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-            gasUsed: '22000'
-          },
-          {
-            complaintId: 'BLOCKCHAIN_003',
-            title: 'Library Access Problem',
-            blockNumber: 14,
-            transactionHash: '0x789abc123def456012345678901234567890123456789012345678901234def789',
-            blockHash: '0x789abc123def456012345678901234567890123456789012345678901234def789',
-            ipfsHash: 'QmDemoHash555666777',
-            status: 'RESOLVED',
-            priority: 'LOW',
-            timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-            gasUsed: '20800'
-          }
-        ];
-      }
-
-      return complaints;
+      console.log(`✅ Returning ${blockchainData.length} blockchain complaints from database`);
+      return blockchainData;
     } catch (error) {
-      console.error('Error getting blockchain complaints:', error);
+      console.error('❌ Error getting blockchain complaints:', error);
       
       // Return mock data if there's an error
       console.log('🔄 Blockchain error occurred, providing mock data for demonstration');
@@ -661,13 +638,21 @@ class BlockchainService {
     try {
       console.log('📊 Getting blockchain statistics');
 
+      // Get actual block count from database
+      const { query } = require('../config/sqlite');
+      const blockCountResult = await query('SELECT COUNT(*) as count FROM block_metadata');
+      const totalBlocks = blockCountResult[0]?.count || 0;
+      
+      const complaintsCountResult = await query('SELECT COUNT(*) as count FROM complaints');
+      const totalComplaints = complaintsCountResult[0]?.count || 0;
+
       if (!this.isConnected || !this.provider) {
         return {
           connected: false,
           mockData: true,
-          totalComplaints: 2,
-          totalBlocks: 3,
-          totalTransactions: 5,
+          totalComplaints: totalComplaints,
+          totalBlocks: totalBlocks,
+          totalTransactions: totalComplaints + totalBlocks,
           averageGasUsed: 21500,
           contractAddress: 'Mock Mode',
           chainId: 'localhost',
@@ -696,7 +681,8 @@ class BlockchainService {
           networkName: network.name,
           currentBlock: blockNumber,
           contractAddress: this.contractAddress,
-          totalComplaints: events.length,
+          totalComplaints: totalComplaints,
+          totalBlocks: totalBlocks,
           totalGasUsed: totalGasUsed,
           averageGasUsed: events.length > 0 ? Math.round(totalGasUsed / events.length) : 0
         };

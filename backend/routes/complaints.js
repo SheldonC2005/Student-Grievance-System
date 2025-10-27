@@ -588,13 +588,11 @@ router.get('/stats/admin', authenticateToken, async (req, res) => {
     // Get admin information from token
     const adminId = req.user.id || req.user.adminId;
     
-    // Get total complaints managed by this admin (complaints they've updated)
+    // Get total complaints managed by this admin (all complaints where status != 'pending')
     const totalResult = await query(`
       SELECT COUNT(DISTINCT c.id) as total 
       FROM complaints c 
-      WHERE c.admin_response IS NOT NULL 
-         OR c.status != 'pending'
-         OR c.updated_at != c.created_at
+      WHERE c.status != 'pending'
     `);
     const totalManaged = totalResult[0]?.total || 0;
     
@@ -604,9 +602,7 @@ router.get('/stats/admin', authenticateToken, async (req, res) => {
         c.status,
         COUNT(*) as count 
       FROM complaints c 
-      WHERE c.admin_response IS NOT NULL 
-         OR c.status != 'pending'
-         OR c.updated_at != c.created_at
+      WHERE c.status != 'pending'
       GROUP BY c.status
     `);
     
