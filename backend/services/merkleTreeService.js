@@ -1,12 +1,14 @@
-const crypto = require('crypto');
+const { Web3 } = require('web3');
 
 /**
  * Merkle Tree Service for generating and verifying complaint blocks
  * Each leaf: hash(complaintId + ipfsHash + sqliteRowId)
+ * Uses keccak256 for Ethereum smart contract compatibility
  */
 class MerkleTreeService {
   constructor() {
-    this.hashFunction = 'sha256';
+    this.hashFunction = 'keccak256';
+    this.web3 = new Web3();
   }
 
   /**
@@ -19,7 +21,8 @@ class MerkleTreeService {
   createComplaintHash(complaintId, ipfsHash, sqliteRowId) {
     try {
       const data = `${complaintId}${ipfsHash}${sqliteRowId}`;
-      return crypto.createHash(this.hashFunction).update(data).digest('hex');
+      const hash = this.web3.utils.keccak256(data);
+      return hash.slice(2); // Remove '0x' prefix to maintain hex string format
     } catch (error) {
       console.error('Error creating complaint hash:', error);
       throw new Error('Failed to create complaint hash');
@@ -37,7 +40,8 @@ class MerkleTreeService {
       // Ensure consistent ordering for same hash pairs
       const sortedHashes = [left, right].sort();
       const combined = sortedHashes.join('');
-      return crypto.createHash(this.hashFunction).update(combined).digest('hex');
+      const hash = this.web3.utils.keccak256(combined);
+      return hash.slice(2); // Remove '0x' prefix to maintain hex string format
     } catch (error) {
       console.error('Error combining hashes:', error);
       throw new Error('Failed to combine hashes');
