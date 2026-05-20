@@ -172,14 +172,23 @@ const query = (sql, params = []) => {
 };
 
 // Close database connection gracefully
+let isDbClosed = false;
+
 const closeDatabase = () => {
   return new Promise((resolve, reject) => {
+    if (isDbClosed) {
+      console.log('ℹ️ Database already closed, skipping...');
+      resolve();
+      return;
+    }
+    
     console.log('🔒 Closing SQLite database connection...');
     db.close((err) => {
       if (err) {
         console.error('❌ Error closing database:', err);
         reject(err);
       } else {
+        isDbClosed = true;
         console.log('✅ Database connection closed successfully');
         resolve();
       }

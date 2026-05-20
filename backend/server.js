@@ -79,16 +79,6 @@ app.use('*', (req, res) => {
 // Graceful shutdown handlers
 const { closeDatabase } = require('./config/sqlite');
 
-process.on('SIGTERM', async () => {
-  console.log('🔄 SIGTERM received, initiating graceful shutdown...');
-  await gracefulShutdown();
-});
-
-process.on('SIGINT', async () => {
-  console.log('🔄 SIGINT received, initiating graceful shutdown...');
-  await gracefulShutdown();
-});
-
 // Initialize all services
 const initializeServices = async () => {
   try {
@@ -186,7 +176,15 @@ process.on('SIGBREAK', () => {
   gracefulShutdown().then(() => process.exit(0));
 });
 
+let isShuttingDown = false;
+
 const gracefulShutdown = async () => {
+  if (isShuttingDown) {
+    console.log('⚠️ Shutdown already in progress, skipping...');
+    return;
+  }
+  isShuttingDown = true;
+  
   try {
     console.log('💾 Shutting down services...');
     
